@@ -6,22 +6,55 @@ const cors = require("cors");
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 app.use(express.json());
 
+// Allowed Frontend URLs
+const allowedOrigins = [
+  "https://garissadigitaltraining.onrender.com",
+  "https://gdehworkshops.onrender.com",
+  "http://localhost:5500",
+  "http://127.0.0.1:5500"
+];
+
+// CORS Configuration
 app.use(
   cors({
-    origin: "*"
+    origin: function (origin, callback) {
+
+      // Allow requests without origin
+      // (mobile apps, curl, Postman)
+
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(
+        new Error("Not allowed by CORS")
+      );
+    },
+
+    credentials: true
   })
 );
 
+// Session Configuration
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
+
     resave: false,
+
     saveUninitialized: false,
 
     cookie: {
-      secure: false,
+      secure: true,
+      sameSite: "none",
       maxAge: 1000 * 60 * 5
     }
   })
@@ -29,7 +62,9 @@ app.use(
 
 // Home Route
 app.get("/", (req, res) => {
+
   res.json({
+    success: true,
     message: "Math CAPTCHA API Running"
   });
 });
@@ -37,14 +72,19 @@ app.get("/", (req, res) => {
 // Generate CAPTCHA
 app.get("/captcha", (req, res) => {
 
-  const num1 = Math.floor(Math.random() * 10) + 1;
-  const num2 = Math.floor(Math.random() * 10) + 1;
+  const num1 =
+    Math.floor(Math.random() * 10) + 1;
+
+  const num2 =
+    Math.floor(Math.random() * 10) + 1;
 
   const answer = num1 + num2;
 
+  // Store answer in session
   req.session.captcha = answer;
 
   res.json({
+    success: true,
     question: `${num1} + ${num2} = ?`
   });
 });
@@ -52,9 +92,16 @@ app.get("/captcha", (req, res) => {
 // Verify CAPTCHA
 app.post("/verify", (req, res) => {
 
-  const userAnswer = Number(req.body.answer);
+  const userAnswer =
+    Number(req.body.answer);
 
-  if(userAnswer === req.session.captcha){
+  // Check answer
+  if (
+    userAnswer === req.session.captcha
+  ) {
+
+    // Destroy used captcha
+    req.session.captcha = null;
 
     return res.json({
       success: true,
@@ -64,12 +111,25 @@ app.post("/verify", (req, res) => {
 
   res.json({
     success: false,
-    message: "Wrong Answer"
+    message: "Wrong CAPTCHA Answer"
   });
 });
 
-const PORT = process.env.PORT || 3000;
+// Handle invalid routes
+app.use((req, res) => {
+
+  res.status(404).json({
+    success: false,
+    message: "Route Not Found"
+  });
+});
+
+const PORT =
+  process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+
+  console.log(
+    `Server running on port ${PORT}`
+  );
 });
