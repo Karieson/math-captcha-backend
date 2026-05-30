@@ -18,5 +18,11 @@
   "bugs": {
     "url": "https://github.com/Karieson/math-captcha-backend/issues"
   },
-  "homepage": "https://github.com/Karieson/math-captcha-backend#readme"
+  "homepage": "https://github.com/Karieson/math-captcha-backend#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0"
+  }
 }
